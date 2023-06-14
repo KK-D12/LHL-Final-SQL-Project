@@ -6,14 +6,16 @@ Answer the following questions and provide the SQL queries used to find the answ
 
 SQL Queries:
 
-
-<img width="810" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/5bd18f33-82e0-4b8e-aba5-e9acc2c86945">
-
+    SELECT country, city, totaltransactionrevenue, currencycode
+    FROM all_sessions a
+    where country != '(not set)' and city != 'not available in demo dataset' and city != '(not set)' and a.v2productcategory != '(not set)' 
+    ORDER BY totaltransactionrevenue DESC
+    LIMIT 5 
 
 Answer:
 
 
-<img width="604" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/e874453b-25c7-4cd7-a1b8-f21ab86df1e7">
+<img width="1116" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/8b90cf81-46f1-4a47-866b-04c1f865b063">
 
 
 **Question 2: What is the average number of products ordered from visitors in each city and country?**
@@ -21,9 +23,12 @@ Answer:
 
 SQL Queries:
 
-
-<img width="893" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/79824174-3e4a-4935-a3e7-fad757c0f27f">
-
+       SELECT  a.country, a.city, AVG(p.orderedquantity) AS average_ordered_quantity
+       FROM all_sessions AS a
+       JOIN products AS p ON a.productsku = p.productsku
+       where country != '(not set)' and city != 'not available in demo dataset' and city != '(not set)'
+       GROUP BY a.city, a.country
+       order by  average_ordered_quantity DESC
 
 Answer:
 
@@ -32,7 +37,7 @@ Result : this will retrieve 268 rows of cities, countries, and the average order
 country. 
 
 
-<img width="1011" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/2ce4808a-a71b-43c1-a136-d6efdc23e6d8">
+<img width="948" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/edd0ee45-2744-45ec-aa5a-46c31729ce15">
 
 
 **Question 3: Is there any pattern in the types (product categories) of products ordered from visitors in each city and country?**
@@ -40,9 +45,11 @@ country.
 
 SQL Queries: 
 
-
-<img width="920" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/64cbf365-ca5d-47ef-9446-1c4312350752">
-
+    SELECT a.city, a.country, ARRAY_AGG(DISTINCT a.v2productcategory) AS product_categories
+    FROM public.all_sessions AS a
+    where country != '(not set)' and city != 'not available in demo dataset' and city != '(not set)'
+    GROUP BY a.city, a.country
+    ORDER BY  product_categories
 
 Answer:
 
@@ -52,7 +59,7 @@ able to identify patterns in the types of products ordered by visitors. Specific
 products in the home category among visitors from various locations.
 
 
-<img width="1111" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/55a04a02-2c6b-4606-98f3-271ab1d553cd">
+<img width="1140" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/63de13f7-1da5-4a61-9fb8-f387f263f4f5">
 
 
 **Question 4: What is the top-selling product from each city/country? Can we find any pattern worthy of noting in the products sold?**
@@ -60,32 +67,47 @@ products in the home category among visitors from various locations.
 
 SQL Queries:
 
-
-<img width="959" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/54f94e65-22be-40c2-abf6-d291b1058c09">
-    
+    SELECT a.city, a.country, a.productsku,  a.v2productname, SUM(p.orderedquantity) AS total_quantity_sold
+    FROM all_sessions a
+    join products p using (productsku)
+    where country != '(not set)' and city != 'not available in demo dataset' and city != '(not set)' and a.v2productcategory != '(not set)' 
+    GROUP BY city, country, productsku, v2productcategory, a.v2productname
+    HAVING SUM(p.orderedquantity) = (
+        SELECT MAX(quantity_sold)
+        FROM (
+        SELECT city, country, productsku, SUM(p.orderedquantity) AS quantity_sold
+        FROM all_sessions a
+        GROUP BY city, country, productsku
+    ) AS subquery 
+    WHERE subquery.city = a.city AND subquery.country = a.country
+    )
+    ORDER BY a.productsku
 
 Answer:
  By examining the results, I can observe that there are products that have good customer preferences and market demand across cities/countries. 
- Total of 3572 rows are returned.   
+ Total of 4055 rows are returned.   
  
- <img width="1131" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/4fd0476d-1ecd-4c1a-b7d7-e26c40ff9a74">
+ <img width="1124" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/91aef057-76be-4bb1-b41d-d89130309f26">
 
 
 **Question 5: Can we summarize the impact of revenue generated from each city/country?**
 
 SQL Queries:
 
-
-<img width="963" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/08db2f33-c2a3-49fe-8b8a-7bb3875d7f2f">
-
+    SELECT a.city, a.country, SUM(a.totaltransactionrevenue) AS total_revenue, 
+    AVG(a.totaltransactionrevenue) AS average_revenue_per_transaction
+    FROM all_sessions a
+    where country != '(not set)' and city != 'not available in demo dataset' and city != '(not set)' and a.v2productcategory != '(not set)' 
+    GROUP BY city, country
+    ORDER BY total_revenue DESC
 
 Answer:
 
 By examining the analysis results, I have identified the cities and countries that contribute the most to the overall revenue. The following are 
-rows from the generated 282 rows. 
+some rows from the generated 273 rows. 
 
 
-<img width="1111" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/a6cb8643-5bd9-4e01-b340-fc129d8b50a6">
+<img width="1110" alt="image" src="https://github.com/KK-D12/LHL-Final-SQL-Project/assets/127278841/0a4452c5-c047-4801-82dd-e272f5f068a2">
 
 
 
